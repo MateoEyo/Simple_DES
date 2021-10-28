@@ -1,0 +1,13 @@
+C:\Users\mmate\Repos\simple_DES\bin\Debug\netcoreapp3.1\simple_DES.exe
+C:\Users\mmate\Repos\simple_DES\bin\Debug\netcoreapp3.1\simple_DES.deps.json
+C:\Users\mmate\Repos\simple_DES\bin\Debug\netcoreapp3.1\simple_DES.runtimeconfig.json
+C:\Users\mmate\Repos\simple_DES\bin\Debug\netcoreapp3.1\simple_DES.runtimeconfig.dev.json
+C:\Users\mmate\Repos\simple_DES\bin\Debug\netcoreapp3.1\simple_DES.dll
+C:\Users\mmate\Repos\simple_DES\bin\Debug\netcoreapp3.1\simple_DES.pdb
+C:\Users\mmate\Repos\simple_DES\obj\Debug\netcoreapp3.1\simple_DES.csprojAssemblyReference.cache
+C:\Users\mmate\Repos\simple_DES\obj\Debug\netcoreapp3.1\simple_DES.AssemblyInfoInputs.cache
+C:\Users\mmate\Repos\simple_DES\obj\Debug\netcoreapp3.1\simple_DES.AssemblyInfo.cs
+C:\Users\mmate\Repos\simple_DES\obj\Debug\netcoreapp3.1\simple_DES.csproj.CoreCompileInputs.cache
+C:\Users\mmate\Repos\simple_DES\obj\Debug\netcoreapp3.1\simple_DES.dll
+C:\Users\mmate\Repos\simple_DES\obj\Debug\netcoreapp3.1\simple_DES.pdb
+C:\Users\mmate\Repos\simple_DES\obj\Debug\netcoreapp3.1\simple_DES.genruntimeconfig.cache
