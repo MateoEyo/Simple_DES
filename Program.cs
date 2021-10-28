@@ -24,6 +24,11 @@ namespace simple_DES
             {
                 bytes[i] = Convert.ToByte(binaryString.Substring(8 * i, 8), 2);
             }
+
+            Console.WriteLine($"fileText: {fileText}");
+            Console.WriteLine($"binaryString: {binaryString}");
+            Console.WriteLine($"bytes: {Encoding.ASCII.GetString(bytes)}\n");
+
             foreach (byte item in bytes)
             {
                 byte leftHalf = GetLeftHalfByte(item);
@@ -33,7 +38,7 @@ namespace simple_DES
                 Console.WriteLine($"left: {leftHalf}");
                 Console.WriteLine($"right: {rightHalf}");
                 byte recombined = RecombineByte(leftHalf, rightHalf);
-                Console.WriteLine($"recombined: {recombined}");
+                Console.WriteLine($"recombined: {recombined}\n");
             }
         }
 
