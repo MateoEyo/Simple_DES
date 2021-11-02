@@ -2,121 +2,131 @@
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Collections.Generic;
 
 namespace simple_DES
 {
     class Program
     {
 
+        const uint LEFT_KEY_BIT_MASK = 0xF00;
+        const uint CENTER_KEY_BIT_MASK = 0x0F0;
+        const uint RIGHT_KEY_BIT_MASK = 0x00F;
+        const uint LEFT_DATA_BIT_MASK = 0xF0;
+        const uint RIGHT_DATA_BIT_MASK = 0x0F;
+        private static Random rand = new Random();
+
         static void Main(string[] args)
         {
+            // Get initial Key (Class example: (A,B,C))
+            uint key = GetKey();
+
+            // Get Key Rounds (Class example: (1,7,6))
+            List<uint> keyRounds = GetKeyRounds(key);
+
             // Specify file path
-            string path = @"bin\file.txt";
-
-            // Read all from path into byte array
-            string fileText = File.ReadAllText(path);
-
-            // Convert all text from file into binary
-            string binaryString = ToBinary(ConvertToByteArray(fileText, Encoding.ASCII));
-
-            string key = GetKey();
-
-            // Convert key to binary string
-            string binaryKey = String.Join(String.Empty,
-                key.Select(
-                    c => Convert.ToString(Convert.ToInt32(c.ToString(), 16), 2).PadLeft(4, '0')
-                )
-            );
-
-            int numOfBytes = binaryString.Length / 8;
-            byte[] bytes = new byte[numOfBytes];
-            for(int i = 0; i < numOfBytes; ++i)
-            {
-                bytes[i] = Convert.ToByte(binaryString.Substring(8 * i, 8), 2);
+            Console.WriteLine("\nEnter a path to a binary file:");
+            string path = Console.ReadLine();
+            while(File.Exists(path) == false) {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Path does not exist, please enter path to existing file:");
+                path = Console.ReadLine();
             }
+            Console.WriteLine();
+            Console.ResetColor();
 
-            Console.WriteLine($"fileText: {fileText}");
-            Console.WriteLine($"binaryString: {binaryString}");
-            Console.WriteLine($"bytes: {Encoding.ASCII.GetString(bytes)}");
-            Console.WriteLine($"key: {key}");
-            Console.WriteLine($"binary key: {binaryKey}\n");
+            // Read in all bytes of file given earlier
+            IEnumerable<uint> data = File.ReadAllBytes(path).Select(x => (uint)x);
+
+            string plainText = Encoding.Default.GetString(
+                    data.Select(x => (byte)x).ToArray()
+                );
+
+            // Encrypt plaintext using Key Scheduler
+            List<uint> encryptedData = data
+                .Select(x => ApplyAlgorithm(x, keyRounds))
+                .ToList();
+
+            // Reverse Keys in Key Scheduler for decryption
+            keyRounds.Reverse();
+
+            // Decrypt ciphertext using reversed key scheduler
+            List<uint> decryptedData = encryptedData
+                .Select(x => ApplyAlgorithm(x, keyRounds))
+                .ToList();
             
-            string[] feistelKeys = GetKeyXORS(binaryKey);
+            // Print out Original, Encrypted, and Decrypted data
+            Console.WriteLine($"Plaintext: {plainText}");
+            Console.Write("Original Data: ");
+            foreach (byte b in data) Console.Write($"{b:X2}");
+            Console.Write("\nEncrypted Data: ");
+            foreach (uint d in encryptedData) Console.Write($"{d:X2}");
+            Console.Write("\nDecrypted Data: ");
+            foreach (uint d in decryptedData) Console.Write($"{d:X2}");
+            Console.WriteLine();
 
-            string ciphertext = EncryptPlainText(binaryString, feistelKeys);
-        }
-
-        /*
-            *** FUNCTIONS ***
-        */
-
-        // * Utility Functions *
-        // ConvertToByteArray / ToBinary are used to convert some string into binary
-        public static byte[] ConvertToByteArray(string str, Encoding encoding)
-        {
-            return encoding.GetBytes(str);
-        }
-
-        public static String ToBinary(Byte[] data)
-        {
-            return string.Join("", data.Select(byt => Convert.ToString(byt, 2).PadLeft(8, '0')));
-        }
-
-        // * Key related functions
-        // Returns a hex string of 12
-        static string GetKey()
-        {
-            System.Random random = new System.Random();
-            int num = random.Next(256, 4095);
-            return num.ToString("X");
-        }
-
-        // Returns a 3 element array of 4 bit keys used for SD_DES
-        static string[] GetKeyXORS(string key)
-        {
-            const int SIZE = 3;
-            string[] preFeistelRounds = new string[SIZE];
-            string[] postFeistelRounds = new string[SIZE];
+            // Convert uint list into plaintext (should be original plaintext)
+            string decryptedText = Encoding.Default.GetString(
+                    decryptedData.Select(x => (byte)x).ToArray()
+                );
             
-            preFeistelRounds[0] = key.Substring(0, 4);
-            preFeistelRounds[1] = key.Substring(4, 4);
-            preFeistelRounds[2] = key.Substring(8, 4);
+            // Print out human readable decrypted text (plaintext)
+            Console.WriteLine($"Decrypted Text: {decryptedText}\n");
 
-            postFeistelRounds[0] = GetXORFromElements(preFeistelRounds[0], preFeistelRounds[1]);
-            postFeistelRounds[1] = GetXORFromElements(preFeistelRounds[1], preFeistelRounds[2]);
-            postFeistelRounds[2] = GetXORFromElements(preFeistelRounds[2], preFeistelRounds[0]);
-
-            return postFeistelRounds;
+            // Write encrypted and decrypted texts to files
+            File.WriteAllBytes(@"bin\outputEncrypted.txt", encryptedData.Select(x => (byte)x).ToArray());
+            File.WriteAllBytes(@"bin\outputDecrypted.txt", decryptedData.Select(x => (byte)x).ToArray());
         }
 
-        // Return 4 bit XOR element
-        static string GetXORFromElements(string first, string second)
+        // This applies the encryption/decryption of SD_DES using the appropriate version of the key scheduler
+        private static uint ApplyAlgorithm(uint plainText, List<uint> keyRounds)
         {
-            int i = 0;
-            string xorToReturn = String.Empty;
+            uint previousRound = plainText;
 
-            foreach (char c in first)
-            {
-                if (c == second[i])
-                {
-                    xorToReturn += '0';
-                } else {
-                    xorToReturn += '1';
-                }
-                i++;
-            }
+            foreach (uint round in keyRounds) 
+                previousRound = ApplyRound(previousRound, round);
 
-            return xorToReturn;
+            uint encryptedData = ApplyFinalRound(previousRound);
+            return encryptedData;
         }
 
-        // * Encryption Functions *
-        static string EncryptPlainText(string plaintext, string[] keys)
+        // 'ApplyFinalRound' is a misnomer, as it's not necessarily an additional round to the four rounds
+        // but it's combining the 'left' and 'right' of the third round to produce the final output
+        private static uint ApplyFinalRound(uint previousData)
         {
-            
+            uint leftPrevious = (previousData & LEFT_DATA_BIT_MASK) >> 4;
+            uint rightPrevious = previousData & RIGHT_DATA_BIT_MASK;
 
-            return null;
+            return (rightPrevious << 4) | leftPrevious;
         }
 
-        // * Decryption Functions *
+
+        // Perform bit shifting against the data given (e.g. the 8 bit data block and the 4 bit key in a given round)
+        private static uint ApplyRound(uint previousData, uint keyRound)
+        {
+            uint leftPrevious = (previousData & LEFT_DATA_BIT_MASK) >> 4;
+            uint rightPrevious = previousData & RIGHT_DATA_BIT_MASK;
+
+            uint newLeft = rightPrevious;
+            uint newRight = (rightPrevious ^ keyRound) ^ leftPrevious;
+
+            uint newData = (newLeft << 4) | newRight;
+
+            return newData;
+        }
+
+        // Perform bit shifting on keys and XOR operations to create key scheduler
+        private static List<uint> GetKeyRounds(uint key)
+        {
+            uint left = (key & LEFT_KEY_BIT_MASK) >> 8;
+            uint center = (key & CENTER_KEY_BIT_MASK) >> 4;
+            uint right = key & RIGHT_KEY_BIT_MASK;
+
+            return new List<uint>() {left ^ center, center ^ right, right ^ left };
+        }
+
+
+        // Returns an unsigned into between 0 - 4095 since all possible 12 bit keys are in that range
+        public static uint GetKey() => (uint) rand.Next(0, 4095);
     }
 }
