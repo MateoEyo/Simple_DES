@@ -18,6 +18,13 @@ namespace simple_DES
 
         static void Main(string[] args)
         {
+            string title = 
+                "\n-----------------------------\n" +
+                "- Simple DES Implementation -\n" +
+                "-----------------------------" ;
+
+            Console.WriteLine($"{title}");
+
             // Get initial Key (Class example: (A,B,C))
             uint key = GetKey();
 
@@ -25,7 +32,7 @@ namespace simple_DES
             List<uint> keyRounds = GetKeyRounds(key);
 
             // Specify file path
-            Console.WriteLine("\nEnter a path to a binary file:");
+            Console.WriteLine("Enter a path to a binary file:");
             string path = Console.ReadLine();
             while(File.Exists(path) == false) {
                 Console.ForegroundColor = ConsoleColor.Red;
@@ -56,8 +63,8 @@ namespace simple_DES
                 .ToList();
             
             // Print out Original, Encrypted, and Decrypted data
-            Console.WriteLine($"Plaintext: {plainText}");
-            Console.Write("Original Data: ");
+            Console.WriteLine(String.Format("{0,-15} {1,-1}","Plaintext: ",$"{plainText}"));
+            Console.Write("Original Data:  ");
             foreach (byte b in data) Console.Write($"{b:X2}");
             Console.Write("\nEncrypted Data: ");
             foreach (uint d in encryptedData) Console.Write($"{d:X2}");
@@ -74,8 +81,17 @@ namespace simple_DES
             Console.WriteLine($"Decrypted Text: {decryptedText}\n");
 
             // Write encrypted and decrypted texts to files
-            File.WriteAllBytes(@"bin\outputEncrypted.txt", encryptedData.Select(x => (byte)x).ToArray());
-            File.WriteAllBytes(@"bin\outputDecrypted.txt", decryptedData.Select(x => (byte)x).ToArray());
+            try{
+                File.WriteAllBytes(@"outputEncrypted.txt", encryptedData.Select(x => (byte)x).ToArray());
+                File.WriteAllBytes(@"outputDecrypted.txt", decryptedData.Select(x => (byte)x).ToArray());
+            } catch (Exception e) {
+                Console.WriteLine("\nSomething went wrong writing out the encrypted and decrypted data.");
+                Console.WriteLine($"The error is printed below\n\n{e}");
+            }
+
+            // Pause program
+            Console.WriteLine("Press any key to exit...");
+            Console.ReadKey();
         }
 
         // This applies the encryption/decryption of SD_DES using the appropriate version of the key scheduler
@@ -90,7 +106,7 @@ namespace simple_DES
             return encryptedData;
         }
 
-        // 'ApplyFinalRound' is a misnomer, as it's not necessarily an additional round to the four rounds
+        // 'ApplyFinalRound' is a misnomer, as it's not necessarily an additional round to the three rounds
         // but it's combining the 'left' and 'right' of the third round to produce the final output
         private static uint ApplyFinalRound(uint previousData)
         {
