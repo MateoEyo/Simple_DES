@@ -80,6 +80,12 @@ namespace simple_DES
             // Print out human readable decrypted text (plaintext)
             Console.WriteLine($"Decrypted Text: {decryptedText}\n");
 
+            // Write histograms
+            Console.WriteLine("*** Histogram for encrypted data ***");
+            WriteHistogram(encryptedData);
+            Console.WriteLine("*** Histogram for decrypted data ***");
+            WriteHistogram(decryptedData);
+
             // Write encrypted and decrypted texts to files
             try{
                 File.WriteAllBytes(@"outputEncrypted.txt", encryptedData.Select(x => (byte)x).ToArray());
@@ -144,5 +150,22 @@ namespace simple_DES
 
         // Returns an unsigned into between 0 - 4095 since all possible 12 bit keys are in that range
         public static uint GetKey() => (uint) rand.Next(0, 4095);
+
+        // Histogram function
+        public static void WriteHistogram(List<uint> data) 
+        {
+            SortedDictionary<uint, int> histogram = new SortedDictionary<uint, int>();
+            foreach (uint item in data) {
+                if (histogram.ContainsKey(item)) {
+                    histogram[item]++;
+                } else {
+                    histogram[item] = 1;
+                }
+            }
+            foreach (KeyValuePair<uint, int> pair in histogram) {
+                Console.WriteLine("{0} occurred {1} times", pair.Key, pair.Value);
+            }
+            Console.WriteLine();
+        }
     }
 }
